@@ -98,6 +98,15 @@ jobs:
           fi
           pushd flutter && flutter pub get && popd
 
+      # Home build: the generator tools above are built with the old pinned compiler they were
+      # written for. The generator itself then reads this project through cargo, which has to be
+      # the compiler the project now uses.
+      - name: Switch to the project compiler
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal
+          rustup default 1.99.1
+          cargo --version
+
       - name: Run flutter rust bridge
         run: |
           ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart --c-output ./flutter/macos/Runner/bridge_generated.h
