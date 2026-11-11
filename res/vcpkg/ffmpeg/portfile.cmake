@@ -1,10 +1,10 @@
-# FFmpeg 7.1.1 includes the HEVC WPP slice-thread deadlock fix:
-# https://github.com/FFmpeg/FFmpeg/commit/79c47dfd25f101b6842bbec8c6ffef8d5077c3ae
+# Home build: FFmpeg 7.1.5, the current 7.1 point release. 7.1.1 and later include the HEVC WPP
+# slice-thread deadlock fix (FFmpeg commit 79c47dfd25f101b6842bbec8c6ffef8d5077c3ae).
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO ffmpeg/ffmpeg
     REF "n${VERSION}"
-    SHA512 6b9a5ee501be41d6abc7579a106263b31f787321cbc45dedee97abf992bf8236cdb2394571dd256a74154f4a20018d429ae7e7f0409611ddc4d6f529d924d175
+    SHA512 eddcd57e4f048f62a95ccbf4ed9ef713d56fe22d4ecaac4175ed3ad8d664c2552f547d668662be04dc469f96109872749bcbbdd2412d3c15d2fa797565028e165
     HEAD_REF master
     PATCHES
     0001-create-lib-libraries.patch
