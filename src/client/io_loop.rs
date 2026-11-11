@@ -2822,7 +2822,10 @@ impl<T: InvokeUiSession> Remote<T> {
 
         let is_stopping_allowed = clip.is_beginning_message();
         let file_transfer_enabled = self.handler.is_file_clipboard_required();
-        let stop = is_stopping_allowed && !file_transfer_enabled;
+        // Home build: drop every file-clipboard message type unless the feature is on.
+        // The stock condition only dropped the opening messages, so a host could still
+        // request clipboard data and file contents.
+        let stop = !file_transfer_enabled;
         log::debug!(
                 "Process clipboard message from server peer, stop: {}, is_stopping_allowed: {}, file_transfer_enabled: {}",
                 stop, is_stopping_allowed, file_transfer_enabled);

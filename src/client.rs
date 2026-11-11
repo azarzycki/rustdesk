@@ -436,6 +436,11 @@ impl Client {
         if config::is_incoming_only() && !is_switch_sides_back(conn_type, &interface).await {
             bail!("Incoming only mode");
         }
+        if crate::home_policy::DIRECT_ONLY && !crate::home_policy::is_loopback_target(peer) {
+            // Home build: sessions go through an SSH tunnel, so the only valid target is a
+            // forwarded port on this device.
+            bail!("This build only connects through an SSH tunnel. Use 127.0.0.1:<port>.");
+        }
         // to-do: remember the port for each peer, so that we can retry easier
         if hbb_common::is_ip_str(peer) {
             return Ok((
@@ -5347,6 +5352,11 @@ pub mod peer_online {
     };
 
     pub async fn query_online_states<F: FnOnce(Vec<String>, Vec<String>)>(ids: Vec<String>, f: F) {
+        if crate::home_policy::DIRECT_ONLY {
+            // Home build: never send the saved peer list to a rendezvous server.
+            f(Vec::new(), ids);
+            return;
+        }
         let test = false;
         if test {
             sleep(1.5).await;

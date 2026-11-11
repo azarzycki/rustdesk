@@ -630,7 +630,8 @@ impl<T: InvokeUiCM> IpcTaskRunner<T> {
                                     let is_stopping_allowed = _clip.is_beginning_message();
                                     let is_clipboard_enabled = ContextSend::is_enabled();
                                     let file_transfer_enabled = self.file_transfer_enabled;
-                                    let stop = !is_stopping_allowed && !(is_clipboard_enabled && file_transfer_enabled);
+                                    // Home build: no message type passes when the feature is off.
+                                    let stop = !(is_clipboard_enabled && file_transfer_enabled);
                                     log::debug!(
                                         "Process clipboard message from client peer, stop: {}, is_stopping_allowed: {}, is_clipboard_enabled: {}, file_transfer_enabled: {}",
                                         stop, is_stopping_allowed, is_clipboard_enabled, file_transfer_enabled);

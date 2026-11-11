@@ -31,7 +31,10 @@
         android:icon="@mipmap/ic_launcher"
         android:label="RustDesk"
         android:roundIcon="@mipmap/ic_launcher"
-        android:supportsRtl="true">
+        android:supportsRtl="true"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        tools:replace="android:allowBackup">
 
         <receiver
             android:name=".BootReceiver"

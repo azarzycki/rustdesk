@@ -310,12 +310,25 @@ impl RendezvousMediator {
     }
 
     pub async fn start_all() {
-        crate::test_nat_type();
         if config::is_outgoing_only() {
             loop {
                 sleep(1.).await;
             }
         }
+        if crate::home_policy::DIRECT_ONLY {
+            // Home build: the loopback direct-access listener is the only thing started.
+            // No registration, NAT test, API sync, auto-update or LAN discovery.
+            check_zombie();
+            let server = new_server();
+            tokio::spawn(async move {
+                direct_server(server).await;
+            });
+            scrap::codec::test_av1();
+            loop {
+                sleep(1.).await;
+            }
+        }
+        crate::test_nat_type();
         crate::hbbs_http::sync::start();
         #[cfg(target_os = "windows")]
         if crate::platform::is_installed() && crate::is_server() {
@@ -1410,7 +1423,10 @@ async fn direct_server(server: ServerPtr) {
         ) || option2bool("stop-service", &Config::get_option("stop-service"));
         if !disabled && listener.is_none() {
             port = get_direct_port();
-            match hbb_common::tcp::listen_any(port as _).await {
+            // Home build: loopback only, so the listener is reachable only through an SSH
+            // server running on this machine.
+            let bind_addr = SocketAddr::new(std::net::Ipv4Addr::LOCALHOST.into(), port as u16);
+            match hbb_common::tcp::new_listener(bind_addr, false).await {
                 Ok(l) => {
                     listener = Some(l);
                     log::info!(

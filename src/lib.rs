@@ -43,6 +43,7 @@ pub mod flutter;
 pub mod flutter_ffi;
 use common::*;
 mod auth_2fa;
+pub mod home_policy;
 mod trusted_devices;
 #[cfg(not(target_os = "ios"))]
 mod clipboard;

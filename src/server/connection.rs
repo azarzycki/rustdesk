@@ -752,6 +752,11 @@ impl Connection {
                 }
                 Some(data) = rx_from_cm.recv() => {
                     match data {
+                        ipc::Data::Authorize if password::approve_mode() == ApproveMode::Password => {
+                            // Home build: in password-only mode a click from the connection
+                            // manager must not authorize a session or drop the 2FA step.
+                            log::warn!("Ignored click approval: approve mode is password only");
+                        }
                         ipc::Data::Authorize => {
                             conn.set_conn_audit_primary_auth(ConnAuditPrimaryAuth::Click);
                             conn.trusted_device = None;
@@ -2912,6 +2917,14 @@ impl Connection {
             self.trusted_device = None;
             if !self.authorized {
                 self.require_2fa = crate::auth_2fa::get_2fa(None);
+                if crate::home_policy::REQUIRE_2FA && self.require_2fa.is_none() {
+                    // Home build: a missing or unreadable 2FA secret closes the door
+                    // instead of falling back to password only.
+                    log::error!("Login refused: 2FA is required but is not set up on this device");
+                    self.send_login_error("2FA is required on this device but is not set up")
+                        .await;
+                    return false;
+                }
             }
             self.handle_login_request_without_validation(&lr).await;
             if self.authorized {

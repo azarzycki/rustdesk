@@ -4308,9 +4308,9 @@ Widget? buildAvatarWidget({
         imageProvider = MemoryImage(base64Decode(trimmed.substring(comma + 1)));
       } catch (_) {}
     }
-  } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    imageProvider = NetworkImage(trimmed);
   }
+  // Home build: remote avatar URLs are never fetched. An unauthenticated peer chooses
+  // this value, so loading it would let a stranger make this device request any URL.
 
   if (imageProvider == null) return fallback;
 

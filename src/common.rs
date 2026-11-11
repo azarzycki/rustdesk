@@ -693,6 +693,10 @@ impl Drop for CheckTestNatType {
 }
 
 pub fn test_nat_type() {
+    if crate::home_policy::DIRECT_ONLY {
+        // Home build: no NAT test against a rendezvous server and no STUN probe.
+        return;
+    }
     test_ipv6_sync();
     use std::sync::atomic::{AtomicBool, Ordering};
     std::thread::spawn(move || {
@@ -2506,7 +2510,14 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
     ThrottledInterval::new(i)
 }
 
+/// Home build: the built-in policy is applied last, so nothing read from a custom.txt
+/// can loosen it.
 pub fn load_custom_client() {
+    load_custom_client_file();
+    crate::home_policy::apply();
+}
+
+fn load_custom_client_file() {
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
@@ -2800,6 +2811,10 @@ async fn test_bind_ipv6() -> ResultType<SocketAddr> {
 }
 
 pub async fn test_ipv6() -> Option<tokio::task::JoinHandle<()>> {
+    if crate::home_policy::DIRECT_ONLY {
+        // Home build: never contact the public STUN servers.
+        return None;
+    }
     {
         // One look and one claim of the minute, under one lock: two connections arriving
         // together would otherwise both find it over and both probe.
