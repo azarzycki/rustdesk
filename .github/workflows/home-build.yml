@@ -1,0 +1,14 @@
+name: Home build
+
+# Builds the Windows, macOS and Android packages of the home-hardened branch.
+# Started by hand only.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/flutter-build.yml
+    secrets: inherit
+    with:
+      upload-artifact: true
+      upload-tag: "home-build"
