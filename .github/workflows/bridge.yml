@@ -103,7 +103,7 @@ jobs:
       # the compiler the project now uses.
       - name: Switch to the project compiler
         run: |
-          rustup toolchain install 1.99.1 --profile minimal
+          rustup toolchain install 1.99.1 --profile minimal --component rustfmt
           rustup default 1.99.1
           cargo --version
 
