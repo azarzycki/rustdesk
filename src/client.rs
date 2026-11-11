@@ -436,10 +436,30 @@ impl Client {
         if config::is_incoming_only() && !is_switch_sides_back(conn_type, &interface).await {
             bail!("Incoming only mode");
         }
-        if crate::home_policy::DIRECT_ONLY && !crate::home_policy::is_loopback_target(peer) {
-            // Home build: sessions go through an SSH tunnel, so the only valid target is a
-            // forwarded port on this device.
-            bail!("This build only connects through an SSH tunnel. Use 127.0.0.1:<port>.");
+        if crate::home_policy::DIRECT_ONLY {
+            if crate::ssh_tunnel::is_tunnel_address(peer) {
+                // Home build: open the SSH path to the host's loopback listener from inside
+                // the app, then use it like a direct connection.
+                let port = crate::ssh_tunnel::connect(peer).await?;
+                return Ok((
+                    (
+                        connect_tcp_local(format!("127.0.0.1:{port}"), None, CONNECT_TIMEOUT)
+                            .await?,
+                        true,
+                        None,
+                        None,
+                        "TCP",
+                    ),
+                    (0, "".to_owned()),
+                    false,
+                ));
+            }
+            if !crate::home_policy::is_loopback_target(peer) {
+                // Anything else would need a rendezvous server, which this build never uses.
+                bail!(
+                    "This build only connects through SSH. Use ssh:user@gateway[:port] or 127.0.0.1:<port>."
+                );
+            }
         }
         // to-do: remember the port for each peer, so that we can retry easier
         if hbb_common::is_ip_str(peer) {
@@ -2923,7 +2943,8 @@ impl LoginConfigHandler {
         login_method: &str,
     ) {
         let mut id = id;
-        if id.contains("@") {
+        // Home build: the @ in an ssh: address separates user and host, not ID and server.
+        if id.contains("@") && !crate::ssh_tunnel::is_tunnel_address(&id) {
             let mut v = id.split("@");
             let raw_id: &str = v.next().unwrap_or_default();
             let mut server_key = v.next().unwrap_or_default().split('?');

@@ -3092,7 +3092,9 @@ pub fn get_control_permission(
 }
 
 pub fn is_direct_ip_access(peer: &str) -> bool {
-    hbb_common::is_ip_str(peer) || hbb_common::is_domain_port_str(peer)
+    hbb_common::is_ip_str(peer)
+        || hbb_common::is_domain_port_str(peer)
+        || crate::ssh_tunnel::is_tunnel_address(peer)
 }
 
 // Align the maximum length of the peer id to the maximum length of the peer id in the server.

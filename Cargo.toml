@@ -6,7 +6,7 @@ edition = "2021"
 build= "build.rs"
 description = "RustDesk Remote Desktop"
 default-run = "rustdesk"
-rust-version = "1.75"
+rust-version = "1.99"
 
 [lib]
 name = "librustdesk"
@@ -89,6 +89,10 @@ totp-rs = { version = "5.4", default-features = false, features = ["gen_secret",
 stunclient = "0.4"
 kcp-sys= { git = "https://github.com/rustdesk-org/kcp-sys", branch = "rustdesk-patches" }
 reqwest = { version = "0.12", features = ["blocking", "socks", "json", "native-tls", "rustls-tls", "rustls-tls-native-roots", "gzip", "zstd"], default-features=false }
+
+# Home build: built-in SSH tunnel. rand 0.10 is what its key generation expects.
+russh = { version = "0.65.1", default-features = false, features = ["ring"] }
+rand010 = { package = "rand", version = "0.10" }
 
 [target.'cfg(not(target_os = "linux"))'.dependencies]
 # https://github.com/rustdesk/rustdesk/discussions/10197, not use cpal on linux
@@ -276,7 +280,7 @@ os-version = "0.2"
 [dev-dependencies]
 hound = "3.5"
 docopt = "1.1"
-tokio = { version = "1.44", features = ["test-util"] }
+tokio = { version = "1.44", features = ["test-util", "macros", "rt-multi-thread", "net", "io-util", "time"] }
 
 [package.metadata.bundle]
 name = "RustDesk"
