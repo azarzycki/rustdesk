@@ -372,7 +372,15 @@ pub fn known_hosts_path() -> PathBuf {
 }
 
 /// Opens the tunnel described by an `ssh:` address and returns the local port to dial.
+/// Every failure is labelled, so the caller can tell an SSH problem from a dropped session
+/// and does not retry it automatically.
 pub async fn connect(addr: &str) -> Result<u16> {
+    connect_inner(addr)
+        .await
+        .map_err(|e| anyhow!("SSH tunnel: {e:#}"))
+}
+
+async fn connect_inner(addr: &str) -> Result<u16> {
     let hops = parse(addr)?;
     let comment = format!("rustdesk-{}", crate::common::hostname());
     let key = Arc::new(load_or_create_key(&key_path(), &comment)?);

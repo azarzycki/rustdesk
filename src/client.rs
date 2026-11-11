@@ -5255,6 +5255,12 @@ lazy_static::lazy_static! {
 /// * `text` - The text of the message.
 #[inline]
 pub fn check_if_retry(msgtype: &str, title: &str, text: &str, retry_for_relay: bool) -> bool {
+    // Home build: an SSH problem (key not authorized, host key changed, forward refused,
+    // wrong kind of address) will not fix itself, and repeated failed logins get this
+    // device blocked by the SSH server. Leave the retry to the user.
+    if text.contains("SSH") {
+        return false;
+    }
     msgtype == "error"
         && title == "Connection Error"
         && ((text.contains("10054") || text.contains("104")) && retry_for_relay
@@ -5277,6 +5283,22 @@ pub fn check_if_retry(msgtype: &str, title: &str, text: &str, retry_for_relay: b
 #[cfg(test)]
 mod retry_tests {
     use super::check_if_retry;
+
+    #[test]
+    fn ssh_errors_are_not_retried_automatically() {
+        for text in [
+            "desk@[gw.example]:2222 did not accept this device's SSH key. Authorize this public key there:
+ssh-ed25519 AAAA",
+            "The SSH host key of [gw.example]:2222 has CHANGED (now SHA256:x). Refusing to connect.",
+            "This build only connects through SSH. Use ssh:user@gateway[:port] or 127.0.0.1:<port>.",
+            "timed out connecting to SSH server [gw.example]:2222",
+            "the SSH server would not open 127.0.0.1:21118 (denied).",
+        ] {
+            assert!(!check_if_retry("error", "Connection Error", text, true), "{text}");
+        }
+        // An ordinary dropped connection is still retried.
+        assert!(check_if_retry("error", "Connection Error", "Reset by the peer", false));
+    }
 
     #[test]
     fn incoming_only_error_is_not_retryable() {
